@@ -1,4 +1,4 @@
-version: '1'
+version: '3.8'
 
 services:
   zookeeper:
@@ -18,10 +18,13 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092  # Use the container name 'kafka'
+      KAFKA_LISTENER_SECURITY_PROTOCOL: PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092  # Listen on all network interfaces
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     depends_on:
       - zookeeper
+
 
 
 

@@ -1,36 +1,22 @@
+from kafka import KafkaConsumer
 import json
-from confluent_kafka import Consumer, KafkaException
-from config.consumer_config import CONSUMER_CONF
-from utils.data_processing import process_message
-from producer import send_to_kafka
 
-# Kafka Consumer Initialization
-consumer = Consumer(CONSUMER_CONF)
-SOURCE_TOPIC = "user-login"
+# Kafka consumer setup
+consumer = KafkaConsumer(
+    'transactions',                         # Topic name
+    bootstrap_servers='localhost:9092',     # Kafka broker address
+    auto_offset_reset='earliest',           # Start from the beginning of the topic
+    value_deserializer=lambda m: m.decode('utf-8') if m else None,  # Just decode the message without deserializing
+    group_id='my-consumer-group'            # Consumer group ID
+)
 
-def main():
-    consumer.subscribe([SOURCE_TOPIC])
-    print("Starting Kafka consumer...")
-
-    try:
-        while True:
-            msg = consumer.poll(1.0)
-            if msg is None:
-                continue
-            if msg.error():
-                if msg.error().code() == KafkaException._PARTITION_EOF:
-                    print("End of partition reached")
-                elif msg.error():
-                    raise KafkaException(msg.error())
-            else:
-                processed_data = process_message(msg.value().decode('utf-8'))
-                if processed_data:
-                    send_to_kafka(processed_data)
-
-    except KeyboardInterrupt:
-        print("Consumer interrupted")
-    finally:
-        consumer.close()
-
-if __name__ == "__main__":
-    main()
+# Consume messages
+print("Consumer started. Listening for messages...")
+for message in consumer:
+        try:
+            parsed_message = json.loads(message.value)  # Try to load as JSON
+            print(f"Parsed JSON message: {parsed_message}")
+        except json.JSONDecodeError:
+            print(f"Invalid JSON: {message.value}")  # Print invalid JSON
+        except Exception as e:
+            print(f"Unexpected error: {e}")
