@@ -3,8 +3,8 @@ import json
 
 # Kafka consumer setup
 consumer = KafkaConsumer(
-    'transactions',                         # Topic name
-    bootstrap_servers='localhost:9092',     # Kafka broker address
+    'Transcations',                         # Topic name
+    bootstrap_servers='localhost:29092',     # Kafka broker address
     auto_offset_reset='earliest',           # Start from the beginning of the topic
     value_deserializer=lambda m: m.decode('utf-8') if m else None,  # Just decode the message without deserializing
     group_id='my-consumer-group'            # Consumer group ID
