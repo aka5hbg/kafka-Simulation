@@ -1,10 +1,22 @@
-from kafka import KafkaProducer
+from confluent_kafka import Producer
+import os
 import json
-import random
 import time
+import uuid
+import random
+from kafka.admin import KafkaAdminClient, NewTopic
 
-# Kafka producer setup (connect to localhost:9092, which is the exposed Kafka port)
-producer = KafkaProducer(bootstrap_servers='localhost:9092', value_serializer=lambda v: json.dumps(v).encode('utf-8'))
+# Kafka producer setup (connect to kafka:9093, which is the internal Kafka port)
+bootstrap_servers = os.environ.get('BOOTSTRAP_SERVERS', 'localhost:9092')
+topic = os.environ.get('KAFKA_TOPIC', 'Transcations')
+
+# Create a Kafka producer configuration
+producer_config = {
+    'bootstrap.servers': bootstrap_servers,
+}
+
+# Create a Kafka producer instance
+producer = Producer(producer_config)
 
 # Simulate a financial transaction
 def generate_transaction():
@@ -19,10 +31,19 @@ def generate_transaction():
     return transaction
 
 # Produce messages to Kafka
-while True:
-    transaction = generate_transaction()
-    producer.send('transactions', transaction)
-    print(f"Produced transaction: {transaction}")
-    time.sleep(2)  # simulate new transaction every 2 seconds
+try:
+    while True:
+        transaction = generate_transaction()
+        # Serialize the transaction to JSON and encode it to bytes
+        transaction_json = json.dumps(transaction).encode('utf-8')
+        producer.produce(topic, transaction_json)
+        producer.flush()
+        print(f"Produced transaction: {transaction}")
+        time.sleep(2)  # simulate new transaction every 2 seconds
 
+except KeyboardInterrupt:
+    pass
 
+# Close the Kafka producer
+producer.flush(30)
+producer.close()
